@@ -1,14 +1,18 @@
+from time import sleep
+
 from PyQt5 import uic
-from PyQt5.QtGui import QStandardItemModel
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QDialog, QAction
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QStateMachine, QState, pyqtSignal
 
 from instrumentmanager import InstrumentManager
 from measuremodel import MeasureModel
-from uistate import UiState
 
 
 class MainWindow(QMainWindow):
+
+    instrumentsFound = pyqtSignal()
+    sampleFound = pyqtSignal()
+    measurementFinished = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -19,8 +23,6 @@ class MainWindow(QMainWindow):
         # create instance variables
         self._ui = uic.loadUi('mainwindow.ui', self)
 
-        self._uiState = UiState()
-
         # create models
         self.measureModels = {
             1: MeasureModel(self),
@@ -28,7 +30,65 @@ class MainWindow(QMainWindow):
         }
         self._instrumentManager = InstrumentManager(self, self.measureModels)
 
+        self.machine = QStateMachine()
+        self.stateInitial = QState()
+        self.stateReadyToCheck = QState()
+        self.stateReadyToMeasure = QState()
+        self.stateAfterMeasure = QState()
+
         self.initDialog()
+
+    def setupStateMachine(self):
+        self.machine.addState(self.stateInitial)
+        self.machine.addState(self.stateReadyToCheck)
+        self.machine.addState(self.stateReadyToMeasure)
+        self.machine.addState(self.stateAfterMeasure)
+
+        self.stateInitial.addTransition(self.instrumentsFound, self.stateReadyToCheck)
+        self.stateInitial.assignProperty(self._ui.btnSearchInstruments, 'enabled', 'True')
+        self.stateInitial.assignProperty(self._ui.btnCheckSample, 'enabled', 'False')
+        self.stateInitial.assignProperty(self._ui.btnMeasureStart, 'visible', 'True')
+        self.stateInitial.assignProperty(self._ui.btnMeasureStart, 'enabled', 'False')
+        self.stateInitial.assignProperty(self._ui.btnMeasureStop, 'visible', 'False')
+        self.stateInitial.assignProperty(self._ui.btnMeasureStop, 'enabled', 'False')
+        self.stateInitial.assignProperty(self._ui.radioLetter1, 'checked', 'True')
+        self.stateInitial.assignProperty(self._ui.radioLetter1, 'enabled', 'True')
+        self.stateInitial.assignProperty(self._ui.radioLetter2, 'enabled', 'True')
+
+        self.stateReadyToCheck.addTransition(self.sampleFound, self.stateReadyToMeasure)
+        self.stateReadyToCheck.assignProperty(self._ui.btnSearchInstruments, 'enabled', 'True')
+        self.stateReadyToCheck.assignProperty(self._ui.btnCheckSample, 'enabled', 'True')
+        self.stateReadyToCheck.assignProperty(self._ui.btnMeasureStart, 'visible', 'True')
+        self.stateReadyToCheck.assignProperty(self._ui.btnMeasureStart, 'enabled', 'False')
+        self.stateReadyToCheck.assignProperty(self._ui.btnMeasureStop, 'visible', 'False')
+        self.stateReadyToCheck.assignProperty(self._ui.btnMeasureStop, 'enabled', 'False')
+        self.stateReadyToCheck.assignProperty(self._ui.radioLetter1, 'enabled', 'True')
+        self.stateReadyToCheck.assignProperty(self._ui.radioLetter2, 'enabled', 'True')
+
+        self.stateReadyToMeasure.addTransition(self.measurementFinished, self.stateAfterMeasure)
+        self.stateReadyToMeasure.addTransition(self.instrumentsFound, self.stateReadyToCheck)
+        self.stateReadyToMeasure.assignProperty(self._ui.btnSearchInstruments, 'enabled', 'True')
+        self.stateReadyToMeasure.assignProperty(self._ui.btnCheckSample, 'enabled', 'False')
+        self.stateReadyToMeasure.assignProperty(self._ui.btnMeasureStart, 'visible', 'True')
+        self.stateReadyToMeasure.assignProperty(self._ui.btnMeasureStart, 'enabled', 'True')
+        self.stateReadyToMeasure.assignProperty(self._ui.btnMeasureStop, 'visible', 'False')
+        self.stateReadyToMeasure.assignProperty(self._ui.btnMeasureStop, 'enabled', 'False')
+        self.stateReadyToMeasure.assignProperty(self._ui.radioLetter1, 'enabled', 'False')
+        self.stateReadyToMeasure.assignProperty(self._ui.radioLetter2, 'enabled', 'False')
+
+        self.stateAfterMeasure.addTransition(self._ui.btnMeasureStop.clicked, self.stateReadyToCheck)
+        self.stateAfterMeasure.addTransition(self.instrumentsFound, self.stateReadyToCheck)
+        self.stateAfterMeasure.assignProperty(self._ui.btnSearchInstruments, 'enabled', 'True')
+        self.stateAfterMeasure.assignProperty(self._ui.btnCheckSample, 'enabled', 'False')
+        self.stateAfterMeasure.assignProperty(self._ui.btnMeasureStart, 'visible', 'False')
+        self.stateAfterMeasure.assignProperty(self._ui.btnMeasureStart, 'enabled', 'False')
+        self.stateAfterMeasure.assignProperty(self._ui.btnMeasureStop, 'visible', 'True')
+        self.stateAfterMeasure.assignProperty(self._ui.btnMeasureStop, 'enabled', 'True')
+        self.stateAfterMeasure.assignProperty(self._ui.radioLetter1, 'enabled', 'False')
+        self.stateAfterMeasure.assignProperty(self._ui.radioLetter2, 'enabled', 'False')
+
+        self.machine.setInitialState(self.stateInitial)
+        self.machine.start()
 
     def setupUiSignals(self):
         self._ui.btnSearchInstruments.clicked.connect(self.onBtnSearchInstrumentsClicked)
@@ -40,6 +100,8 @@ class MainWindow(QMainWindow):
         self._ui.radioLetter2.toggled.connect(self.onRadioToggled)
 
     def initDialog(self):
+        self.setupStateMachine()
+
         self.setupUiSignals()
 
         self._ui.bgrpLetter.setId(self._ui.radioLetter1, 1)
@@ -47,13 +109,11 @@ class MainWindow(QMainWindow):
 
         self._ui.textLog.hide()
 
-        self.updateUi(state=self._uiState)
-
         self.refreshView()
 
     # UI utility methods
     def refreshView(self):
-        pass
+        self.resizeTable()
         # twidth = self.ui.tableSuggestions.frameGeometry().width() - 30
         # self.ui.tableSuggestions.setColumnWidth(0, twidth * 0.05)
         # self.ui.tableSuggestions.setColumnWidth(1, twidth * 0.10)
@@ -65,32 +125,6 @@ class MainWindow(QMainWindow):
     def resizeTable(self):
         self._ui.tableMeasure.resizeRowsToContents()
         self._ui.tableMeasure.resizeColumnsToContents()
-
-    def updateUi(self, state):
-        print('updating ui', state)
-        self.blockSignals(True)
-
-        if state._letterActive == UiState.letter1:
-            self._ui.radioLetter1.setChecked(True)
-        elif state._letterActive == UiState.letter2:
-            self._ui.radioLetter2.setChecked(True)
-
-        self._ui.editSource.setText(state._sourceName)
-        self._ui.editGen1.setText(state._generator1Name)
-        self._ui.editGen2.setText(state._generator2Name)
-        self._ui.editAnalyzer.setText(state._analyzerName)
-
-        self._ui.btnCheckSample.setEnabled(state._btnCheckSampleEnabled)
-        self._ui.btnMeasureStart.setEnabled(state._btnMeasureStartEnabled)
-        self._ui.btnMeasureStart.setVisible(state._btnMeasureStartVisible)
-        self._ui.btnMeasureStop.setVisible(state._btnMeasureStopVisible)
-
-        self._ui.radioLetter1.setEnabled(state._bgrpLetterEnabled)
-        self._ui.radioLetter2.setEnabled(state._bgrpLetterEnabled)
-
-        self.blockSignals(False)
-
-        self.resizeTable()
 
     def search(self):
         if not self._instrumentManager.findInstruments():
@@ -107,22 +141,17 @@ class MainWindow(QMainWindow):
 
     # TODO: extract to a measurement manager class
     def onBtnSearchInstrumentsClicked(self):
-        self._uiState._btnCheckSampleEnabled = False
-        self._uiState._btnMeasureStartEnabled = False
-        self._uiState._bgrpLetterEnabled = True
-
         if not self.search():
             return
-
-        self._uiState._btnCheckSampleEnabled = True
-        self._uiState.setInstrumentNames(self._instrumentManager.getInstrumentNames())
-        self.updateUi(self._uiState)
+        self.stateReadyToCheck.assignProperty(self._ui.editSource, 'text', str(self._instrumentManager._source))
+        self.stateReadyToCheck.assignProperty(self._ui.editGen1, 'text', str(self._instrumentManager._generator1))
+        self.stateReadyToCheck.assignProperty(self._ui.editGen2, 'text', str(self._instrumentManager._generator2))
+        self.stateReadyToCheck.assignProperty(self._ui.editAnalyzer, 'text', str(self._instrumentManager._analyzer))
+        self.instrumentsFound.emit()
 
     def failWith(self, message):
         QMessageBox.information(self, "Ошибка", message)
-        self._uiState._bgrpLetterEnabled = True
-        self._uiState._btnMeasureStartEnabled = False
-        self.updateUi(self._uiState)
+        self.instrumentsFound.emit()
 
     def onBtnCheckSample(self):
 
@@ -136,9 +165,8 @@ class MainWindow(QMainWindow):
             print('error opening table')
             return
 
-        self._uiState._bgrpLetterEnabled = False
-        self._uiState._btnMeasureStartEnabled = True
-        self.updateUi(self._uiState)
+        self.sampleFound.emit()
+        self.refreshView()
 
     def onBtnMeasureStart(self):
         print('start measurement task')
@@ -149,21 +177,12 @@ class MainWindow(QMainWindow):
             return
 
         self._instrumentManager.measure(self._ui.bgrpLetter.checkedId())
-
-        self._uiState._btnMeasureStartVisible = False
-        self._uiState._btnMeasureStopVisible = True
-        self._uiState._btnCheckSampleEnabled = False
-        self.updateUi(self._uiState)
+        self.measurementFinished.emit()
+        self.refreshView()
 
     def onBtnMeasureStop(self):
+        # TODO implement
         print('abort measurement task')
-        # TODO: stop measure
-        self._uiState._btnMeasureStartVisible = True
-        self._uiState._btnMeasureStopVisible = False
-        self._uiState._btnMeasureStartEnabled = False
-        self._uiState._btnCheckSampleEnabled = True
-        self._uiState._bgrpLetterEnabled = True
-        self.updateUi(self._uiState)
 
     def onRadioToggled(self, checked):
         if not checked:
@@ -171,7 +190,7 @@ class MainWindow(QMainWindow):
 
         letter = self._ui.bgrpLetter.checkedId()
         print('switching to letter', letter)
-        self._uiState.setActiveLetter(letter)
 
         self._ui.tableMeasure.setModel(self.measureModels[letter])
-        self.resizeTable()
+        self.refreshView()
+

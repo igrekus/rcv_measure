@@ -13,6 +13,9 @@ class Source:
         self.reset()
 
     def __str__(self):
+        return f'{self._name}'
+
+    def __repr__(self):
         return f'{self.__class__}(idn={self._idn})'
 
     def send(self, command):
