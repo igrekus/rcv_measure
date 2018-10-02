@@ -54,6 +54,10 @@ class Analyzer:
     def remove_marker(self, marker):
         return self.send(f'SET MARKER{marker} OFF')
 
+    def set_system_local(self):
+        # pass
+        self.send(f'system:local')
+
     @property
     def name(self):
         return self._name

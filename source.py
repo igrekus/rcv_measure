@@ -74,8 +74,8 @@ class Source:
         self.send(f'OUTP {state}')
 
     def set_system_local(self):
-        pass
-        # self.send(f'system:local')
+        # pass
+        self.send(f'system:local')
 
     # set parameters and trigger output
     # VOLT:TRIG 3.0
@@ -119,6 +119,6 @@ class Source:
             raise ValueError('Wrong channel index.')
 
         if chan != self._active_channel:
-            print(f'{self._name} select chan {chan}', self.send(f'INST:SEL OUTP1'))
+            print(f'{self._name} select chan {chan}', self.send(f'INST:SEL OUTP{chan}'))
             self._active_channel = chan
 

@@ -38,6 +38,10 @@ class Generator:
     def set_output(self, status):
         self.send(f'OUTP:STAT {status}')
 
+    def set_system_local(self):
+        # pass
+        self.send(f'system:local')
+
     @property
     def name(self):
         return self._name

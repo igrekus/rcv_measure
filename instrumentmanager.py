@@ -17,7 +17,7 @@ from source import Source
 from sourcemock import SourceMock
 
 # MOCK
-mock_enabled = True
+mock_enabled = False
 
 class InstrumentManager(QObject):
 
@@ -73,6 +73,7 @@ class InstrumentManager(QObject):
                     model = answer.split(',')[1].strip()
                     print(model, self._generatorList)
                     if model == 'E3648A':
+                    # if model == 'E3631A':
                         self._source = Source(res, answer, inst)
                         print('>>> source')
                     # elif 'N5183A' in answer:
@@ -136,7 +137,7 @@ class InstrumentManager(QObject):
         self._generator2.set_output('ON')
 
         if not mock_enabled:
-            time.sleep(0.5)
+            time.sleep(1)
 
         self._analyzer.set_autocalibrate('OFF')
         self._analyzer.set_span(1, 'MHz')
@@ -145,7 +146,7 @@ class InstrumentManager(QObject):
         self._analyzer.set_marker1_x_center(100, 'MHz')
 
         if not mock_enabled:
-            time.sleep(0.5)
+            time.sleep(1)
 
         read_pow = self._analyzer.read_pow(marker=1)
         print('marker value:', read_pow)
@@ -167,6 +168,9 @@ class InstrumentManager(QObject):
             time.sleep(0.3)
 
         self._source.set_system_local()
+        self._generator1.set_system_local()
+        self._generator2.set_system_local()
+        self._analyzer.set_system_local()
 
         return self._samplePresent
 
@@ -259,6 +263,8 @@ class InstrumentManager(QObject):
 
         generator.set_pow(self.measure_pow[1]['p1'], self.measure_pow_unit)
 
+        [do_branch(self, letter, branch) for branch in [1, 2]]
+        [do_branch(self, letter, branch) for branch in [1, 2]]
         return [do_branch(self, letter, branch) for branch in [1, 2]]
 
     def measureTask(self, letter: int):
