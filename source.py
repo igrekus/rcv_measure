@@ -44,7 +44,6 @@ class Source:
 
         self.send(f'CURRent {value}{unit}')
 
-
     def set_voltage_limit(self, chan: int, value: float, unit: str):
         if chan not in [1, 2]:
             raise ValueError('Wrong channel index.')
