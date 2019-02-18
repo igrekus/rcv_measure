@@ -118,12 +118,12 @@ class InstrumentManager(QObject):
                 line = f.readline()
                 self.pow_limit = float(line.split('=')[1].strip())
 
-        self._source.set_current(chan=1, value=40, unit='mA')
+        self._source.set_current(chan=1, value=10, unit='mA')
         self._source.set_voltage(chan=1, value=3, unit='V')
-        self._source.set_current(chan=2, value=40, unit='mA')
-        self._source.set_voltage(chan=2, value=0, unit='V')
-
         self._source.set_output(chan=1, state='ON')
+
+        self._source.set_current(chan=2, value=10, unit='mA')
+        self._source.set_voltage(chan=2, value=0, unit='V')
         self._source.set_output(chan=2, state='ON')
 
         self._generator1.set_modulation('OFF')
@@ -143,13 +143,13 @@ class InstrumentManager(QObject):
         self._analyzer.set_span(1, 'MHz')
         self._analyzer.set_measure_center_freq(100, 'MHz')
         self._analyzer.set_marker_mode(1, 'POS')
-        self._analyzer.set_marker1_x_center(10, 'MHz')
+        self._analyzer.set_marker1_x_center(100, 'MHz')
 
         if not mock_enabled:
             time.sleep(1)
 
         read_pow = self._analyzer.read_pow(marker=1)
-        print('marker value:', read_pow)
+        print(f'marker value: {read_pow:2f}')
 
         if read_pow > self.pow_limit:
             self._samplePresent = True
@@ -161,16 +161,16 @@ class InstrumentManager(QObject):
 
         self._analyzer.set_autocalibrate('ON')
         self._generator1.set_output('OFF')
-        self._source.set_output(1, 'OFF')
-        self._source.set_output(2, 'OFF')
+        self._source.set_output(chan=2, state='OFF')
+        self._source.set_output(chan=1, state='OFF')
 
         if not mock_enabled:
             time.sleep(0.3)
 
-        self._source.set_system_local()
-        self._generator1.set_system_local()
-        self._generator2.set_system_local()
-        self._analyzer.set_system_local()
+        # self._source.set_system_local()
+        # self._generator1.set_system_local()
+        # self._generator2.set_system_local()
+        # self._analyzer.set_system_local()
 
         return self._samplePresent
 
@@ -277,8 +277,8 @@ class InstrumentManager(QObject):
         self._analyzer.set_autocalibrate('OFF')
         self._analyzer.set_span(10, 'MHz')
 
-        self._source.set_current(1, 40, 'mA')
-        self._source.set_current(2, 40, 'mA')
+        self._source.set_current(1, 10, 'mA')
+        self._source.set_current(2, 10, 'mA')
 
         self._analyzer.set_marker_mode(1, 'POS')
 
