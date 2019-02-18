@@ -47,7 +47,7 @@ class Analyzer:
         self.send(f':CALCulate:MARKer1:X:CENTer {str(value)}{unit}')
 
     def read_pow(self, marker: int) -> float:
-        answer = self.query(f':CALCulate:MARKer:Y?')
+        answer = self.query(f':CALCulate:MARKer1:Y?')
         return float(answer)
         # return random.choice([-12, -50])
 
