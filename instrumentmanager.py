@@ -141,7 +141,7 @@ class InstrumentManager(QObject):
 
         self._analyzer.set_autocalibrate('OFF')
         self._analyzer.set_span(1, 'MHz')
-        self._analyzer.set_measure_center_freq(10, 'MHz')
+        self._analyzer.set_measure_center_freq(100, 'MHz')
         self._analyzer.set_marker_mode(1, 'POS')
         self._analyzer.set_marker1_x_center(10, 'MHz')
 
