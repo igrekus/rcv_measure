@@ -119,11 +119,11 @@ class InstrumentManager(QObject):
                 line = f.readline()
                 self.pow_limit = float(line.split('=')[1].strip())
 
-        self._source.set_current(chan=1, value=10, unit='mA')
+        self._source.set_current(chan=1, value=20, unit='mA')
         self._source.set_voltage(chan=1, value=3, unit='V')
         self._source.set_output(chan=1, state='ON')
 
-        self._source.set_current(chan=2, value=10, unit='mA')
+        self._source.set_current(chan=2, value=20, unit='mA')
         self._source.set_voltage(chan=2, value=0, unit='V')
         self._source.set_output(chan=2, state='ON')
 
