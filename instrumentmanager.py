@@ -26,7 +26,7 @@ class InstrumentManager(QObject):
 
     measure_freq_unit = 'GHz'
     measure_pow_unit = 'dBm'
-    measure_current = 10
+    measure_current = 20
 
     control_voltage = 3.0   # was 4.75
 
@@ -121,11 +121,11 @@ class InstrumentManager(QObject):
                 line = f.readline()
                 self.pow_limit = float(line.split('=')[1].strip())
 
-        self._source.set_current(chan=1, value=20, unit='mA')
+        self._source.set_current(chan=1, value=self.measure_current, unit='mA')
         self._source.set_voltage(chan=1, value=3, unit='V')
         self._source.set_output(chan=1, state='ON')
 
-        self._source.set_current(chan=2, value=20, unit='mA')
+        self._source.set_current(chan=2, value=self.measure_current, unit='mA')
         self._source.set_voltage(chan=2, value=0, unit='V')
         self._source.set_output(chan=2, state='ON')
 
@@ -283,8 +283,8 @@ class InstrumentManager(QObject):
         self._analyzer.set_autocalibrate('OFF')
         self._analyzer.set_span(10, 'MHz')
 
-        self._source.set_current(1, 10, 'mA')
-        self._source.set_current(2, 10, 'mA')
+        self._source.set_current(1, self.measure_current, 'mA')
+        self._source.set_current(2, self.measure_current, 'mA')
 
         self._analyzer.set_marker_mode(1, 'POS')
 
