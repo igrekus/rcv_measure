@@ -39,6 +39,8 @@ class InstrumentManager(QObject):
         2: {'p1': -40.0, 'p2': -30.0, 'p3': -20.0}
     }
 
+    step_voltage = [3.0, 2.8, 3.2]
+
     def __init__(self, parent=None, measureModels: dict=None):
         super(InstrumentManager, self).__init__(parent)
         print('instrument manager: init')
@@ -229,7 +231,9 @@ class InstrumentManager(QObject):
 
     def generator_freq_sweep(self, generator, letter):
 
-        def do_branch(self, letter, branch):
+        def do_branch(letter, branch, step):
+
+            self.control_voltage = self.step_voltage[step]
 
             if branch == 1:
                 chan1voltage = self.control_voltage
@@ -264,9 +268,10 @@ class InstrumentManager(QObject):
 
         generator.set_pow(self.measure_pow[1]['p1'], self.measure_pow_unit)
 
-        [do_branch(self, letter, branch) for branch in [1, 2]]
-        [do_branch(self, letter, branch) for branch in [1, 2]]
-        return [do_branch(self, letter, branch) for branch in [1, 2]]
+        pows = list()
+        for cycle in range(3):
+            pows = [do_branch(letter, branch, cycle) for branch in [1, 2]]
+        return pows
 
     def measureTask(self, letter: int):
 
