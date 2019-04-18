@@ -19,6 +19,7 @@ from sourcemock import SourceMock
 # MOCK
 mock_enabled = False
 
+
 class InstrumentManager(QObject):
 
     excel_extension = '.xlsx'
